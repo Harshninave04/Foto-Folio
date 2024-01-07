@@ -1,16 +1,41 @@
-import { useRef } from "react";
+import { useRef, useState } from "react";
+import axios from "axios";
 // import Suggestion from "./Suggestion";
 // import CardSection from "./CardSection";
+
+const API_URL = "https://api.unsplash.com/search/photos";
+const IMAGE_PER_PAGE = 20;
+
 function App() {
+  // console.log("key", import.meta.env.VITE_API_KEY);
   const searchInput = useRef(null);
+  const [images, setImages] = useState([]);
+  const [totalPages, setTotalPages] = useState(0);
+
+  const fetchImages = async () => {
+    try {
+      const result = await axios.get(
+        `${API_URL}?query=${
+          searchInput.current.value
+        }&page=1&per_page=${IMAGE_PER_PAGE}&client_id=${import.meta.env.VITE_API_KEY}`
+      );
+      console.log("result", result.data);
+      setImages(result.data.results);
+      setTotalPages(result.data.total_pages);
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   const handleSearch = (event) => {
     event.preventDefault();
-    console.log(searchInput.current.value);
+    // console.log(searchInput.current.value);
+    fetchImages();
   };
 
   const handleSelection = (selection) => {
     searchInput.current.value = selection;
+    fetchImages();
   };
 
   return (
@@ -58,10 +83,19 @@ function App() {
         </button>
       </div>
 
-      {/* <div className="flex grid grid-cols-5 mt-10 py-5 justify-start gap-3 m-0 px-3">
-        <CardSection />
-        <CardSection />
-      </div> */}
+      <div className="flex items-start w-lg mt-10 flex-wrap gap-4">
+        {images.map((image) => {
+          return (
+            <img
+              key={image.id}
+              src={image.urls.small}
+              alt={image.alt_description}
+              className="image"
+              style={{ marginLeft: "20px ", height: "210px", objectFit: "cover" }}
+            />
+          );
+        })}
+      </div>
     </>
   );
 }
