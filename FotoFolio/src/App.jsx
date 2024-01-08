@@ -1,5 +1,7 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import axios from "axios";
+// Axios is used for taking HTTP requests
+
 // import Suggestion from "./Suggestion";
 // import CardSection from "./CardSection";
 
@@ -10,14 +12,19 @@ function App() {
   // console.log("key", import.meta.env.VITE_API_KEY);
   const searchInput = useRef(null);
   const [images, setImages] = useState([]);
+  const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
+
+  useEffect(() => {
+    fetchImages();
+  }, [page]);
 
   const fetchImages = async () => {
     try {
       const result = await axios.get(
         `${API_URL}?query=${
           searchInput.current.value
-        }&page=1&per_page=${IMAGE_PER_PAGE}&client_id=${import.meta.env.VITE_API_KEY}`
+        }&page=${page}&per_page=${IMAGE_PER_PAGE}&client_id=${import.meta.env.VITE_API_KEY}`
       );
       console.log("result", result.data);
       setImages(result.data.results);
@@ -31,12 +38,16 @@ function App() {
     event.preventDefault();
     // console.log(searchInput.current.value);
     fetchImages();
+    setPage(1);
   };
 
   const handleSelection = (selection) => {
     searchInput.current.value = selection;
     fetchImages();
+    setPage(1);
   };
+
+  console.log("page", page);
 
   return (
     <>
@@ -84,17 +95,42 @@ function App() {
       </div>
 
       <div className="flex items-start w-lg mt-10 flex-wrap gap-4">
-        {images.map((image) => {
-          return (
-            <img
-              key={image.id}
-              src={image.urls.small}
-              alt={image.alt_description}
-              className="image"
-              style={{ marginLeft: "20px ", height: "210px", objectFit: "cover" }}
-            />
-          );
-        })}
+        {images.map((image) => (
+          <img
+            key={image.id}
+            src={image.urls.small}
+            alt={image.alt_description}
+            className="image"
+            style={{
+              marginLeft: "20px ",
+              height: "210px",
+              objectFit: "cover",
+              borderRadius: "5px",
+              gap: "20px",
+            }}
+          />
+        ))}
+      </div>
+
+      <div className="flex space-x-2 item-start justify-center item-center mt-5 mb-10">
+        {page > 1 && (
+          <button
+            className="rounded-md bg-pink-200 px-3 py-2 text-sm font-semibold mx-5 text-black shadow-sm hover:bg-sky-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black"
+            onClick={() => {
+              setPage(page - 1);
+            }}>
+            Previous
+          </button>
+        )}
+        {page < totalPages && (
+          <button
+            className="rounded-md bg-pink-200 px-3 py-2 text-sm font-semibold mx-5 text-black shadow-sm hover:bg-sky-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black"
+            onClick={() => {
+              setPage(page + 1);
+            }}>
+            Next
+          </button>
+        )}
       </div>
     </>
   );
