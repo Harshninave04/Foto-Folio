@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import axios from "axios";
 // Axios is used for taking HTTP requests
 
@@ -14,25 +14,30 @@ function App() {
   const [images, setImages] = useState([]);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
+  const [ErrorMsg, setErrorMsg] = useState("");
+
+  const fetchImages = useCallback(async () => {
+    try {
+      if (searchInput.current.value) {
+        setErrorMsg("");
+        const result = await axios.get(
+          `${API_URL}?query=${
+            searchInput.current.value
+          }&page=${page}&per_page=${IMAGE_PER_PAGE}&client_id=${import.meta.env.VITE_API_KEY}`
+        );
+        console.log("result", result.data);
+        setImages(result.data.results);
+        setTotalPages(result.data.total_pages);
+      }
+    } catch (error) {
+      setErrorMsg("Error fetching images. Try again later");
+      console.log(error);
+    }
+  }, [page]);
 
   useEffect(() => {
     fetchImages();
-  }, [page]);
-
-  const fetchImages = async () => {
-    try {
-      const result = await axios.get(
-        `${API_URL}?query=${
-          searchInput.current.value
-        }&page=${page}&per_page=${IMAGE_PER_PAGE}&client_id=${import.meta.env.VITE_API_KEY}`
-      );
-      console.log("result", result.data);
-      setImages(result.data.results);
-      setTotalPages(result.data.total_pages);
-    } catch (error) {
-      console.log(error);
-    }
-  };
+  }, [fetchImages, page]);
 
   const handleSearch = (event) => {
     event.preventDefault();
@@ -52,6 +57,7 @@ function App() {
   return (
     <>
       <h1 className="text-center mt-10 text-[60px]">FotoFolio</h1>
+      {ErrorMsg && <p className="text-red-600 text-center mt-5">{ErrorMsg}</p>}
       <div className="flex item-start justify-center mt-10 w-full items-center space-x-2">
         <input
           className="flex m-1 top h-10 w-1/4 rounded-md border border-black/30 bg-transparent px-3 py-2 text-sm placeholder:text-white-600 focus:outline-pink-300 focus:bg-sky-100 focus:ring-grey/30 focus:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50"
